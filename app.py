@@ -123,7 +123,7 @@ def submit():
     can.drawString(270, 58, cust_name)
     can.drawString(270, 48, stamp)
 
-    # --- Wrapping) ---
+    # --- Wrapping ---
     styles = getSampleStyleSheet()
     normal = styles["Normal"]
     normal.fontName = "Helvetica"
@@ -218,7 +218,14 @@ def submit():
     page.merge_page(overlay_pdf.pages[0])
     writer.add_page(page)
 
-    output_filename = os.path.join(UPLOAD_FOLDER, f"Filled_{customer}.pdf")
+    safe_customer = customer.replace(" ", "_")
+    safe_name = cust_name.replace(" ", "_")
+    safe_date = service_date.replace("-", "")
+    output_filename = os.path.join(
+    UPLOAD_FOLDER,
+    f"{safe_customer}_{safe_name}_{safe_date}_ServiceReport.pdf"
+)
+
     with open(output_filename, "wb") as f:
         writer.write(f)
         upload_to_drive_and_email(output_filename, customer_email="technical@pebblereka.com")
@@ -276,3 +283,4 @@ if __name__ == "__main__":
     # Never use debug=True in production
 
     app.run(host="0.0.0.0", port=port)
+
