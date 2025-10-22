@@ -1,5 +1,0 @@
-flask
-reportlab
-PyPDF2
-pillow
-gunicorn
