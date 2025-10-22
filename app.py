@@ -274,9 +274,14 @@ def submit():
     f"{safe_customer}_{safe_name}_{safe_date}_ServiceReport.pdf"
 )
 
+# Save the completed PDF
     with open(output_filename, "wb") as f:
         writer.write(f)
-        upload_to_drive_and_email(output_filename, customer_email="technical@pebblereka.com")
+
+    # ✅ Now that it's fully saved, upload + email it
+    upload_to_drive_and_email(output_filename, customer_email="technical@pebblereka.com")
+
+    return send_file(output_filename, as_attachment=True)
 
     from googleapiclient.discovery import build
     from google.oauth2.credentials import Credentials
@@ -289,6 +294,7 @@ if __name__ == "__main__":
     # Never use debug=True in production
 
     app.run(host="0.0.0.0", port=port)
+
 
 
 
