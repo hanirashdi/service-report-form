@@ -70,12 +70,11 @@
     <input type="file" name="photo3" accept="image/*"><br><br>
     <input type="file" name="photo4" accept="image/*"><br><br>
 
-    <h4>Services By:</h4>
+    <h4>Service By:</h4>
     <canvas id="signService" width="400" height="150"></canvas><br>
-    <button type="button" onclick="clearSig('service')">Clear</button><br><br>
-
+    <button type="button" id="clearService">Clear</button><br><br>
     <input type="hidden" name="signService" id="signServiceData">
-
+    
     <label>Technician Name:</label>
     <input type="text" name="tech_name" required><br><br>
 
@@ -84,8 +83,7 @@
 
     <h4>Acknowledge By:</h4>
     <canvas id="signCust" width="400" height="150"></canvas><br>
-    <button type="button" onclick="clearSig('cust')">Clear</button><br><br>
-
+    <button type="button" id="clearCust">Clear</button><br><br>
     <input type="hidden" name="signCust" id="signCustData">
 
     <label>Customer Name:</label>
@@ -97,26 +95,31 @@
     <button type="submit">Submit Form</button>
   </form>
 
-  <script>
-    // Signature drawing
-    const servCanvas = document.getElementById('signService');
-    const servCtx = servCanvas.getContext('2d');
-    let servDrawing = false;
+<script>
+function setupSignature(canvasId, dataInputId, clearButtonId) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  let drawing = false;
 
-    servCanvas.addEventListener('mousedown', () => { servDrawing = true; servCtx.beginPath(); });
-    servCanvas.addEventListener('mouseup', () => { servDrawing = false; });
-    servCanvas.addEventListener('mousemove', (e) => drawSig(e,servCanvas, servCtx, servDrawing));
+  // Handle mouse
+  canvas.addEventListener('mousedown', e => { drawing = true; ctx.beginPath(); draw(e); });
+  canvas.addEventListener('mouseup', () => drawing = false);
+  canvas.addEventListener('mousemove', e => draw(e));
 
-    const custCanvas = document.getElementById('signCust');
-    const custCtx = custCanvas.getContext('2d');
-    let custDrawing = false;
+  // Handle touch
+  canvas.addEventListener('touchstart', e => { 
+    e.preventDefault();
+    drawing = true; 
+    ctx.beginPath(); 
+    draw(e.touches[0]); 
+  });
+  canvas.addEventListener('touchmove', e => { 
+    e.preventDefault();
+    draw(e.touches[0]); 
+  });
+  canvas.addEventListener('touchend', e => { drawing = false; });
 
-    custCanvas.addEventListener('mousedown', () => {custDrawing = true; custCtx.beginPath(); });
-    custCanvas.addEventListener('mouseup', () => {custDrawing = false; });
-    custCanvas.addEventListener('mousemove', (e) => drawSig(e, custCanvas, custCtx, custDrawing));
-
-  // Generic drawing function
-  function drawSig(e, canvas, ctx, drawing) {
+  function draw(e) {
     if (!drawing) return;
     const rect = canvas.getBoundingClientRect();
     ctx.lineWidth = 2;
@@ -128,22 +131,17 @@
     ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
   }
 
-  // Clear function for each pad
-  function clearSig(which) {
-    if (which === 'service') {
-      servCtx.clearRect(0, 0, servCanvas.width, servCanvas.height);
-      servCtx.beginPath();
-    } else if (which === 'cust') {
-      custCtx.clearRect(0, 0, custCanvas.width, custCanvas.height);
-      custCtx.beginPath();
-    }
-  }
-
-  // Convert both canvases to base64 before submit
-  document.getElementById("serviceForm").addEventListener("submit", function() {
-    document.getElementById("signServiceData").value = servCanvas.toDataURL();
-    document.getElementById("signCustData").value = custCanvas.toDataURL();
+  document.getElementById(clearButtonId).addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
   });
+
+  document.getElementById("serviceForm").addEventListener("submit", () => {
+    document.getElementById(dataInputId).value = canvas.toDataURL();
+  });
+}
+
+setupSignature('signService', 'signServiceData', 'clearService');
+setupSignature('signCust', 'signCustData', 'clearCust');
 </script>
 </body>
 </html>
