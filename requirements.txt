@@ -2,4 +2,8 @@ flask
 reportlab
 PyPDF2
 pillow
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
 gunicorn
