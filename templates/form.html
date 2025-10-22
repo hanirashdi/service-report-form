@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Service Report Form</title>
+  <style>
+    body { font-family: Arial; margin: 30px; }
+    canvas { border: 1px solid #000; }
+  </style>
+</head>
+<body>
+  <h2>Customer Service Report</h2>
+
+  <form id="serviceForm" method="POST" action="/submit" enctype="multipart/form-data">
+    <label>Customer:</label>
+    <input type="text" name="customer" required><br><br>
+
+    <label>Address:</label><br>
+    <textarea name="address" rows="4" cols="50"></textarea><br><br>
+
+    <label>Machine Type:</label>
+    <input type="text" name="machine_type" required><br><br>
+
+    <label>Serial Number:</label>
+    <input type="text" name="serial_number"><br><br>
+    
+    <label>Type of Service:</label>
+    <select name="type_of_service" required>
+    <option value="">-- Select Type --</option>
+    <option value="Service and Maintenance">Service and Maintenance</option>
+    <option value="Troubleshooting and Diagnose">Troubleshooting and Diagnose</option>
+    <option value="Sparepart Installation">Sparepart Installation</option>
+    </select><br><br>
+
+    <label>Tech. Service Report No:</label>
+    <input type="text" name="report_no"><br><br>
+
+    <label>Date of Service:</label>
+    <input type="date" name="service_date" required><br><br>
+
+    <label>Time of Service:</label>
+    <input type="time" name="service_time" required><br><br>
+
+    <label>Request Date:</label>
+    <input type="date" name="req_date" required><br><br>
+
+    <label>Payment Term:</label>
+    <input type="text" name="payment"><br><br>
+
+    <label>Quotation No:</label>
+    <input type="text" name="quotation"><br><br>
+
+    <label>PO Ref:</label>
+    <input type="text" name="po"><br><br>
+
+    <label>Invoice No:</label>
+    <input type="text" name="invoice"><br><br>
+
+    <label>Status of Call:</label>
+    <input type="text" name="status"><br><br>
+
+    <label>Problem Description:</label><br>
+    <textarea name="problem" rows="4" cols="50"></textarea><br><br>
+
+    <label>Summary of Services:</label><br>
+    <textarea name="summary" rows="10" cols="50"></textarea><br><br>
+
+    <h4>Attach Photos (up to 4):</h4>
+    <input type="file" name="photo1" accept="image/*"><br><br>
+    <input type="file" name="photo2" accept="image/*"><br><br>
+    <input type="file" name="photo3" accept="image/*"><br><br>
+    <input type="file" name="photo4" accept="image/*"><br><br>
+
+    <h4>Services By:</h4>
+    <canvas id="signService" width="400" height="150"></canvas><br>
+    <button type="button" onclick="clearSig('service')">Clear</button><br><br>
+
+    <input type="hidden" name="signService" id="signServiceData">
+
+    <label>Technician Name:</label>
+    <input type="text" name="tech_name" required><br><br>
+
+    <label>Designation:</label>
+    <input type="text" name="designation" required><br><br>
+
+    <h4>Acknowledge By:</h4>
+    <canvas id="signCust" width="400" height="150"></canvas><br>
+    <button type="button" onclick="clearSig('cust')">Clear</button><br><br>
+
+    <input type="hidden" name="signCust" id="signCustData">
+
+    <label>Customer Name:</label>
+    <input type="text" name="cust_name" required><br><br>
+
+    <label>Stamp:</label>
+    <input type="text" name="stamp"><br><br>
+
+    <button type="submit">Submit Form</button>
+  </form>
+
+  <script>
+    // Signature drawing
+    const servCanvas = document.getElementById('signService');
+    const servCtx = servCanvas.getContext('2d');
+    let servDrawing = false;
+
+    servCanvas.addEventListener('mousedown', () => { servDrawing = true; servCtx.beginPath(); });
+    servCanvas.addEventListener('mouseup', () => { servDrawing = false; });
+    servCanvas.addEventListener('mousemove', (e) => drawSig(e,servCanvas, servCtx, servDrawing));
+
+    const custCanvas = document.getElementById('signCust');
+    const custCtx = custCanvas.getContext('2d');
+    let custDrawing = false;
+
+    custCanvas.addEventListener('mousedown', () => {custDrawing = true; custCtx.beginPath(); });
+    custCanvas.addEventListener('mouseup', () => {custDrawing = false; });
+    custCanvas.addEventListener('mousemove', (e) => drawSig(e, custCanvas, custCtx, custDrawing));
+
+  // Generic drawing function
+  function drawSig(e, canvas, ctx, drawing) {
+    if (!drawing) return;
+    const rect = canvas.getBoundingClientRect();
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'black';
+    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+  }
+
+  // Clear function for each pad
+  function clearSig(which) {
+    if (which === 'service') {
+      servCtx.clearRect(0, 0, servCanvas.width, servCanvas.height);
+      servCtx.beginPath();
+    } else if (which === 'cust') {
+      custCtx.clearRect(0, 0, custCanvas.width, custCanvas.height);
+      custCtx.beginPath();
+    }
+  }
+
+  // Convert both canvases to base64 before submit
+  document.getElementById("serviceForm").addEventListener("submit", function() {
+    document.getElementById("signServiceData").value = servCanvas.toDataURL();
+    document.getElementById("signCustData").value = custCanvas.toDataURL();
+  });
+</script>
+</body>
+</html>
