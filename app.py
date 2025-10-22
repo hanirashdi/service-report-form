@@ -7,10 +7,59 @@ from PIL import Image
 from reportlab.lib.utils import ImageReader
 from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
+from googleapiclient.discovery import build
+from google.oauth2.credentials import Credentials
+from googleapiclient.http import MediaFileUpload
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def upload_to_drive_and_email(pdf_path, customer_email=None):
+    # Load credentials (Render secret files are mounted under /etc/secrets)
+    creds = Credentials.from_authorized_user_file("/etc/secrets/token.json", [
+         "https://www.googleapis.com/auth/drive.file",
+         "https://www.googleapis.com/auth/gmail.send"
+    ])
+
+    # --- Upload to Google Drive ---
+    drive_service = build("drive", "v3", credentials=creds)
+    folder_id = "1b_JEWA3m-kYgFXELWIfOKWG14w4SeJOR"  # Replace with your Drive folder ID
+    file_metadata = {
+           "name": os.path.basename(pdf_path),
+           "parents": [folder_id]
+    }
+     media = MediaFileUpload(pdf_path, mimetype="application/pdf")
+     file = drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+     print(f"✅ Uploaded to Drive, file ID: {file.get('id')}")
+
+    # --- Send Email (optional) ---
+    if customer_email:
+         gmail_service = build("gmail", "v1", credentials=creds)
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
+            from email.mime.base import MIMEBase
+            from email import encoders
+
+            msg = MIMEMultipart()
+            msg["to"] = customer_email
+            msg["subject"] = "Service Report PDF"
+            msg.attach(MIMEText("Attached is the completed service report.", "plain"))
+
+            with open(pdf_path, "rb") as f:
+                part = MIMEBase("application", "octet-stream")
+                part.set_payload(f.read())
+                encoders.encode_base64(part)
+                part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(pdf_path)}")
+                msg.attach(part)
+
+            raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+            gmail_service.users().messages().send(userId="me", body={"raw": raw}).execute()
+            print(f"✅ Email sent to {customer_email}")
 
 @app.route('/')
 def form():
@@ -233,48 +282,6 @@ def submit():
     from googleapiclient.discovery import build
     from google.oauth2.credentials import Credentials
 
-    def upload_to_drive_and_email(pdf_path, customer_email=None):
-        # Load credentials (Render secret files are mounted under /etc/secrets)
-        creds = Credentials.from_authorized_user_file("/etc/secrets/token.json", [
-            "https://www.googleapis.com/auth/drive.file",
-            "https://www.googleapis.com/auth/gmail.send"
-        ])
-
-        # --- Upload to Google Drive ---
-        drive_service = build("drive", "v3", credentials=creds)
-        folder_id = "https://drive.google.com/drive/folders/1b_JEWA3m-kYgFXELWIfOKWG14w4SeJOR?usp=sharing"  # Replace with your Drive folder ID
-        file_metadata = {
-            "name": os.path.basename(pdf_path),
-            "parents": [folder_id]
-        }
-        media = MediaFileUpload(pdf_path, mimetype="application/pdf")
-        file = drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
-        print(f"✅ Uploaded to Drive, file ID: {file.get('id')}")
-
-        # --- Send Email (optional) ---
-        if customer_email:
-            gmail_service = build("gmail", "v1", credentials=creds)
-            from email.mime.text import MIMEText
-            from email.mime.multipart import MIMEMultipart
-            from email.mime.base import MIMEBase
-            from email import encoders
-
-            msg = MIMEMultipart()
-            msg["to"] = customer_email
-            msg["subject"] = "Service Report PDF"
-            msg.attach(MIMEText("Attached is the completed service report.", "plain"))
-
-            with open(pdf_path, "rb") as f:
-                part = MIMEBase("application", "octet-stream")
-                part.set_payload(f.read())
-                encoders.encode_base64(part)
-                part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(pdf_path)}")
-                msg.attach(part)
-
-            raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
-            gmail_service.users().messages().send(userId="me", body={"raw": raw}).execute()
-            print(f"✅ Email sent to {customer_email}")
-
     return send_file(output_filename, as_attachment=True)
 
 if __name__ == "__main__":
@@ -283,4 +290,5 @@ if __name__ == "__main__":
     # Never use debug=True in production
 
     app.run(host="0.0.0.0", port=port)
+
 
