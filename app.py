@@ -211,7 +211,7 @@ def submit():
     packet.seek(0)
 
     overlay_pdf = PdfReader(packet)
-    base_pdf = PdfReader(open(r"C:\Users\Acer\Downloads\Service_Report_Form_app\report.pdf", "rb"))
+    base_pdf = PdfReader(open("report.pdf", "rb"))
     writer = PdfWriter()
 
     page = base_pdf.pages[0]
